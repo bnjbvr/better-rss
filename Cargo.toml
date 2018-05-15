@@ -1,0 +1,8 @@
+[package]
+name = "xkcd2rss"
+version = "0.1.0"
+authors = ["Benjamin Bouvier <public@benj.me>"]
+
+[dependencies]
+reqwest = "0.8.5"
+select = "0.4.2"
