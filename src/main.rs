@@ -16,57 +16,32 @@ impl Entry {
     }
 }
 
-fn unwrap_res<R, T: std::fmt::Display>(result: Result<R, T>, msg: &str)
-    -> Result<R, ()>
-{
-    match result {
-        Ok(x) => {
-            Ok(x)
-        }
-        Err(err) => {
-            println!("Encountered an error while {}: {}", msg.to_string(), err);
-            Err(())
-        }
-    }
-}
+type GenError = Box<std::error::Error>;
+type GenResult<T> = Result<T, GenError>;
 
-fn unwrap_opt<R>(opt: Option<R>, msg: &str)
-    -> Result<R, ()>
-{
-    match opt {
-        Some(x) => {
-            Ok(x)
-        }
-        None => {
-            println!("Expected something while {}, got nothing.", msg);
-            Err(())
-        }
-    }
-}
-
-fn xkcd(num_entries: u32) -> Result<Vec<Entry>, ()> {
+fn xkcd(num_entries: u32) -> GenResult<Vec<Entry>> {
     let base_url = String::from("https://xkcd.com");
 
     let mut entries: Vec<Entry> = Vec::new();
 
     let mut url: String = base_url.clone();
     for _ in 1..num_entries {
-        let text = unwrap_res(reqwest::get(url.as_str()), "retrieving the http content")?;
-        let document = unwrap_res(Document::from_read(text), "parsing HTML")?;
+        let text = reqwest::get(url.as_str())?;
+        let document = Document::from_read(text)?;
 
-        let comic = unwrap_opt(document.find(Attr("id", "comic")).next(), "finding #comic")?;
+        let comic = document.find(Attr("id", "comic")).next().ok_or("unable to find #comic")?;
 
-        let img = unwrap_opt(comic.find(Name("img")).next(), "finding <img>")?;
+        let img = comic.find(Name("img")).next().ok_or("finding <img>")?;
         // src has the following format: //img.xkcd.com/4242
-        let src = String::from("https:") + unwrap_opt(img.attr("src"), "reading img src")?;
-        let title = unwrap_opt(img.attr("alt"), "reading img alt")?;
-        let hover = unwrap_opt(img.attr("title"), "reading img title")?;
+        let src = String::from("https:") + img.attr("src").ok_or("reading img src")?;
+        let title = img.attr("alt").ok_or("reading img alt")?;
+        let hover = img.attr("title").ok_or("reading img title")?;
 
         let e = Entry::new(src.into(), title.into(), hover.into());
         entries.push(e);
 
-        let prev = unwrap_opt(document.find(Attr("rel", "prev")).next(), "finding prev link")?;
-        let prev_link = unwrap_opt(prev.attr("href"), "reading link href")?;
+        let prev = document.find(Attr("rel", "prev")).next().ok_or("finding prev link")?;
+        let prev_link = prev.attr("href").ok_or("reading link href")?;
         url = base_url.clone() + prev_link;
     }
 
@@ -76,8 +51,8 @@ fn xkcd(num_entries: u32) -> Result<Vec<Entry>, ()> {
 fn main() {
     let entries = match xkcd(20) {
         Ok(entries) => { entries }
-        Err(_) => {
-            println!("An error occurred while making a feed for xkcd, aborting.");
+        Err(err) => {
+            println!("An error occurred while making a feed for xkcd, aborting: {}", err);
             Vec::new()
         }
     };
