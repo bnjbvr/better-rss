@@ -15,7 +15,7 @@ type GenResult<T> = Result<T, GenError>;
 
 fn xkcd(num_entries: u32) -> GenResult<Vec<rss::Item>> {
     let base_url = String::from("https://xkcd.com");
-    let number_re = Regex::new(r"(?P<id>\d{1,})").unwrap();
+    let number_re = Regex::new(r"(?P<id>\d{1,})")?;
 
     let mut items: Vec<rss::Item> = Vec::new();
 
@@ -51,8 +51,7 @@ fn xkcd(num_entries: u32) -> GenResult<Vec<rss::Item>> {
             .title(title)
             .link(link)
             .content(format!("<img src='{}' /><p>{}</p>", src, hover))
-            .build()
-            .unwrap();
+            .build()?;
 
         items.push(item);
 
