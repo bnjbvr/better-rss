@@ -9,6 +9,7 @@ use utils::GenResult;
 pub struct ConfigEntry {
     pub feed_name: String,
     pub num_entries: u32,
+    pub out_filename: String,
 }
 
 type Configuration = Vec<ConfigEntry>;

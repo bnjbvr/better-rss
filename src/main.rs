@@ -13,6 +13,7 @@ mod xkcd;
 use config::read_config;
 use std::collections::HashMap;
 use utils::GenResult;
+use std::fs::File;
 
 enum Feed {
     Xkcd,
@@ -41,6 +42,12 @@ fn make_channel(feed: &Feed, num_entries: u32) -> GenResult<rss::Channel> {
     Ok(channel)
 }
 
+fn write_feed(channel: &rss::Channel, outpath: &str) -> GenResult<()> {
+    let file = File::create(outpath)?;
+    channel.pretty_write_to(file, b' ', 4)?;
+    Ok(())
+}
+
 fn main() {
     let config = read_config().unwrap();
     for entry in config {
@@ -50,8 +57,7 @@ fn main() {
                 panic!("Unknown feed name: {}", entry.feed_name);
             }
         };
-
         let channel = make_channel(&feed, entry.num_entries).unwrap();
-        println!("{}", channel.to_string());
+        write_feed(&channel, entry.out_filename.as_str()).unwrap();
     }
 }
