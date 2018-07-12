@@ -1,10 +1,10 @@
-use select::document::Document;
-use select::predicate::{Attr, Name};
 use regex::Regex;
 use reqwest;
 use rss;
+use select::document::Document;
+use select::predicate::{Attr, Name};
 
-use utils::{ GenResult, Channel };
+use utils::{Channel, GenResult};
 
 pub fn make(num_entries: u32) -> GenResult<Channel> {
     let base_url = String::from("https://xkcd.com");
@@ -19,7 +19,10 @@ pub fn make(num_entries: u32) -> GenResult<Channel> {
         let text = reqwest::get(url.as_str())?;
         let document = Document::from_read(text)?;
 
-        let comic = document.find(Attr("id", "comic")).next().ok_or("unable to find #comic")?;
+        let comic = document
+            .find(Attr("id", "comic"))
+            .next()
+            .ok_or("unable to find #comic")?;
 
         let img = comic.find(Name("img")).next().ok_or("finding <img>")?;
         // src has the following format: //img.xkcd.com/4242
@@ -27,7 +30,10 @@ pub fn make(num_entries: u32) -> GenResult<Channel> {
         let title = img.attr("alt").ok_or("reading img alt")?.to_string();
         let hover = img.attr("title").ok_or("reading img title")?;
 
-        let prev = document.find(Attr("rel", "prev")).next().ok_or("finding prev link")?;
+        let prev = document
+            .find(Attr("rel", "prev"))
+            .next()
+            .ok_or("finding prev link")?;
         let prev_link = prev.attr("href").ok_or("reading link href")?;
 
         let prev_id = number_re
@@ -38,7 +44,7 @@ pub fn make(num_entries: u32) -> GenResult<Channel> {
             .as_str();
 
         let prev_id_num = prev_id.parse::<u32>()?;
-        let link = String::from(format!("https://xkcd.com/{}", prev_id_num + 1));
+        let link = format!("https://xkcd.com/{}", prev_id_num + 1);
 
         let item = rss::ItemBuilder::default()
             .title(title)
@@ -52,5 +58,10 @@ pub fn make(num_entries: u32) -> GenResult<Channel> {
         url = base_url.clone() + prev_link;
     }
 
-    return Ok(("XKCD feed", "RSS feed for xkcd that includes hover links in plain text.", "http://xkcd.com", items));
+    Ok((
+        "XKCD feed",
+        "RSS feed for xkcd that includes hover links in plain text.",
+        "http://xkcd.com",
+        items,
+    ))
 }

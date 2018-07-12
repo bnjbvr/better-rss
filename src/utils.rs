@@ -1,5 +1,5 @@
-use std;
 use rss;
+use std;
 
 pub type GenError = Box<std::error::Error>;
 pub type GenResult<T> = Result<T, GenError>;

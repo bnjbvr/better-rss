@@ -8,7 +8,7 @@ use utils::GenResult;
 #[derive(Debug, PartialEq, Deserialize)]
 pub struct ConfigEntry {
     pub feed_name: String,
-    pub num_entries: u32
+    pub num_entries: u32,
 }
 
 type Configuration = Vec<ConfigEntry>;
