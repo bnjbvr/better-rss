@@ -1,61 +1,57 @@
-use regex::Regex;
+use chrono;
+use chrono::prelude::*;
+use json;
 use reqwest;
 use rss;
-use select::document::Document;
-use select::predicate::{Attr, Name};
 
 use utils::{Channel, GenResult};
 
 pub fn make(num_entries: u32) -> GenResult<Channel> {
-    let base_url = String::from("https://xkcd.com");
-    let number_re = Regex::new(r"(?P<id>\d{1,})")?;
-
     let mut items: Vec<rss::Item> = Vec::new();
+    let mut url = String::from("https://xkcd.com/info.0.json");
 
-    let mut url: String = base_url.clone();
+    eprintln!("Starting to fetch XKCD...");
+
     for i in 1..(num_entries + 1) {
         eprintln!("fetching item #{}...", i);
+        let text = reqwest::get(url.as_str())?.text()?;
+        let response = json::parse(&text)?;
 
-        let text = reqwest::get(url.as_str())?;
-        let document = Document::from_read(text)?;
+        let title = String::from(response["safe_title"].as_str().ok_or("missing title")?);
+        let xkcd_id = response["num"].as_u32().ok_or("missing id")?;
+        let link = format!("https://xkcd.com/{}", xkcd_id);
 
-        let comic = document
-            .find(Attr("id", "comic"))
-            .next()
-            .ok_or("unable to find #comic")?;
+        let src = response["img"].as_str().ok_or("missing src")?;
+        let hover = response["alt"].as_str().ok_or("missing alt")?;
+        let content = format!("<img src='{}' /><p>{}</p>", src, hover);
 
-        let img = comic.find(Name("img")).next().ok_or("finding <img>")?;
-        // src has the following format: //img.xkcd.com/4242
-        let src = String::from("https:") + img.attr("src").ok_or("reading img src")?;
-        let title = img.attr("alt").ok_or("reading img alt")?.to_string();
-        let hover = img.attr("title").ok_or("reading img title")?;
-
-        let prev = document
-            .find(Attr("rel", "prev"))
-            .next()
-            .ok_or("finding prev link")?;
-        let prev_link = prev.attr("href").ok_or("reading link href")?;
-
-        let prev_id = number_re
-            .captures(prev_link)
-            .ok_or("couldn't find previous link numeric id")?
-            .get(0)
-            .ok_or("couldn't find previous link numeric id")?
-            .as_str();
-
-        let prev_id_num = prev_id.parse::<u32>()?;
-        let link = format!("https://xkcd.com/{}", prev_id_num + 1);
+        let year = response["year"]
+            .as_str()
+            .ok_or("missing year in date")?
+            .parse::<i32>()?;
+        let month = response["month"]
+            .as_str()
+            .ok_or("missing month in date")?
+            .parse::<u32>()?;
+        let day = response["day"]
+            .as_str()
+            .ok_or("missing day in date")?
+            .parse::<u32>()?;
+        let date = chrono::Utc
+            .ymd(year, month, day)
+            .and_hms(0, 0, 0)
+            .to_rfc2822();
 
         let item = rss::ItemBuilder::default()
             .title(title)
             .link(link)
-            .content(format!("<img src='{}' /><p>{}</p>", src, hover))
+            .content(content)
+            .pub_date(date)
             .build()?;
 
         items.push(item);
 
-        // Now move on to the next item.
-        url = base_url.clone() + prev_link;
+        url = format!("https://xkcd.com/{}/info.0.json", xkcd_id - 1);
     }
 
     Ok((

@@ -1,7 +1,8 @@
 #[macro_use]
 extern crate serde_derive;
 
-extern crate regex;
+extern crate chrono;
+extern crate json;
 extern crate reqwest;
 extern crate rss;
 extern crate select;
