@@ -8,6 +8,7 @@ extern crate rss;
 extern crate select;
 
 mod config;
+mod loadingartist;
 mod thenib;
 mod utils;
 mod xkcd;
@@ -20,12 +21,14 @@ use utils::GenResult;
 enum Feed {
     Xkcd,
     TheNib,
+    LoadingArtist,
 }
 
 fn make_channel(feed: &Feed, num_entries: u32) -> GenResult<rss::Channel> {
     let (title, description, link, items) = match feed {
         Feed::Xkcd => xkcd::make(num_entries)?,
         Feed::TheNib => thenib::make(num_entries)?,
+        Feed::LoadingArtist => loadingartist::make(num_entries)?,
     };
 
     let mut channel = rss::ChannelBuilder::default()
@@ -62,6 +65,7 @@ fn main() {
         let feed = match entry.feed_name.as_str() {
             "thenib" => Feed::TheNib,
             "xkcd" => Feed::Xkcd,
+            "loadingartist" => Feed::LoadingArtist,
             _ => {
                 panic!("Unknown feed name: {}", entry.feed_name);
             }

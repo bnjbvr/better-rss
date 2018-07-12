@@ -1,6 +1,9 @@
 - feed_name: "xkcd"
-  num_entries: 10
+  num_entries: 0
   out_filename: "xkcd.rss"
 - feed_name: "thenib"
-  num_entries: 10
+  num_entries: 50
   out_filename: "thenib.rss"
+- feed_name: "loadingartist"
+  num_entries: 50
+  out_filename: "loadingartist.rss"
