@@ -2,8 +2,12 @@
   num_entries: 0
   out_filename: "xkcd.rss"
 - feed_name: "thenib"
-  num_entries: 50
+  num_entries: 0
   out_filename: "thenib.rss"
 - feed_name: "loadingartist"
-  num_entries: 50
+  num_entries: 0
   out_filename: "loadingartist.rss"
+- feed_name: "instagram"
+  num_entries: 20
+  out_filename: "retroviseur.rss"
+  account_name: "retroviseur.workshop"

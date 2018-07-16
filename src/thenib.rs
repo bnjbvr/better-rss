@@ -20,9 +20,9 @@ pub fn make(num_entries: u32) -> GenResult<Channel> {
     let items = from_feed(&rss_url, num_entries, TheNib {})?;
 
     Ok((
-        "The Nib",
-        "RSS feed for The Nib that includes full content.",
-        "https://thenib.com",
+        "The Nib".into(),
+        "RSS feed for The Nib that includes full content.".into(),
+        "https://thenib.com".into(),
         items,
     ))
 }

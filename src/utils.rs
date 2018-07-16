@@ -6,7 +6,7 @@ use select::document::Document;
 
 pub type GenError = Box<std::error::Error>;
 pub type GenResult<T> = Result<T, GenError>;
-pub type Channel = (&'static str, &'static str, &'static str, Vec<rss::Item>);
+pub type Channel = (String, String, String, Vec<rss::Item>);
 
 pub trait ContentCreator {
     fn create(&self, doc: &Document) -> Option<String>;

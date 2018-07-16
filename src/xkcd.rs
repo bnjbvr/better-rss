@@ -55,9 +55,9 @@ pub fn make(num_entries: u32) -> GenResult<Channel> {
     }
 
     Ok((
-        "XKCD feed",
-        "RSS feed for xkcd that includes hover links in plain text.",
-        "http://xkcd.com",
+        "XKCD feed".into(),
+        "RSS feed for xkcd that includes hover links in plain text.".into(),
+        "http://xkcd.com".into(),
         items,
     ))
 }

@@ -12,6 +12,7 @@ mod loadingartist;
 mod thenib;
 mod utils;
 mod xkcd;
+mod instagram;
 
 use config::read_config;
 use std::collections::HashMap;
@@ -22,6 +23,7 @@ enum Feed {
     Xkcd,
     TheNib,
     LoadingArtist,
+    Instagram(String),
 }
 
 fn make_channel(feed: &Feed, num_entries: u32) -> GenResult<rss::Channel> {
@@ -29,6 +31,7 @@ fn make_channel(feed: &Feed, num_entries: u32) -> GenResult<rss::Channel> {
         Feed::Xkcd => xkcd::make(num_entries)?,
         Feed::TheNib => thenib::make(num_entries)?,
         Feed::LoadingArtist => loadingartist::make(num_entries)?,
+        Feed::Instagram(account_name) => instagram::make(&account_name, num_entries)?,
     };
 
     let mut channel = rss::ChannelBuilder::default()
@@ -66,12 +69,24 @@ fn main() {
             "thenib" => Feed::TheNib,
             "xkcd" => Feed::Xkcd,
             "loadingartist" => Feed::LoadingArtist,
+            "instagram" => {
+                if let Some(name) = entry.account_name {
+                    Feed::Instagram(name)
+                } else {
+                    panic!("Missing instagram account name");
+                }
+            }
             _ => {
                 panic!("Unknown feed name: {}", entry.feed_name);
             }
         };
 
-        let channel = make_channel(&feed, entry.num_entries).unwrap();
+        let channel = match make_channel(&feed, entry.num_entries) {
+            Ok(channel) => channel,
+            Err(err) => {
+                panic!("Error when making channel: {}", err);
+            }
+        };
 
         write_feed(&channel, entry.out_filename.as_str()).unwrap();
     }

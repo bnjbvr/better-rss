@@ -34,9 +34,9 @@ pub fn make(num_entries: u32) -> GenResult<Channel> {
     let items = from_feed(&rss_url, num_entries, LoadingArtist {})?;
 
     Ok((
-        "Loading Aritst",
-        "RSS feed for Loading Artist that includes full content.",
-        "https://loadingartist.com",
+        "Loading Artist".into(),
+        "RSS feed for Loading Artist that includes full content.".into(),
+        "https://loadingartist.com".into(),
         items,
     ))
 }
