@@ -18,6 +18,7 @@ use config::read_config;
 use std::collections::HashMap;
 use std::fs::File;
 use utils::GenResult;
+use std::process;
 
 enum Feed {
     Xkcd,
@@ -59,6 +60,8 @@ fn write_feed(channel: &rss::Channel, outpath: &str) -> GenResult<()> {
 }
 
 fn main() {
+    let mut had_error = false;
+
     let config = read_config().unwrap();
     for entry in config {
         if entry.num_entries == 0 {
@@ -84,10 +87,16 @@ fn main() {
         let channel = match make_channel(&feed, entry.num_entries) {
             Ok(channel) => channel,
             Err(err) => {
-                panic!("Error when making channel: {}", err);
+                eprintln!("Error when making channel {}: {}", entry.feed_name, err);
+                had_error = true;
+                continue;
             }
         };
 
         write_feed(&channel, entry.out_filename.as_str()).unwrap();
+    }
+
+    if had_error {
+        process::exit(-1);
     }
 }
