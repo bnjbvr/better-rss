@@ -6,35 +6,39 @@ use utils::{Channel, GenResult};
 
 #[derive(Deserialize)]
 struct RssBridgeEntry {
-    uri: String,
-    content: String,
+    url: String,
+    content_html: String,
     title: String,
-    timestamp: i64,
+    date_modified: String,
 }
 
-type RssBridgeVector = Vec<RssBridgeEntry>;
+#[derive(Deserialize)]
+struct RssBridgeResult {
+    items: Vec<RssBridgeEntry>,
+}
 
-static BASE: &str = "https://www.svtux.fr/rssbridge/index.php?action=display&bridge=Instagram&media_type=all&format=Json";
+static BASE: &str = "https://wtf.roflcopter.fr/rss-bridge/index.php?action=display&bridge=Instagram&media_type=all&format=Json";
 
 pub fn make(account_name: &str, num_entries: u32) -> GenResult<Channel> {
     let rss_url = format!("{}&u={}", BASE, account_name);
     eprintln!("Starting to fetch Instagram account {}...", account_name);
 
-    let channel = reqwest::get(&rss_url)?.json::<RssBridgeVector>()?;
+    let channel = reqwest::get(&rss_url)?.json::<RssBridgeResult>()?;
 
     let mut items = Vec::new();
-    for (i, entry) in channel.iter().enumerate() {
+    for (i, entry) in channel.items.iter().enumerate() {
         eprintln!("fetching item #{}...", i + 1);
-        let title = format!("Entry {}", entry.timestamp);
-        let link = entry.uri.clone();
+        let link = entry.url.clone();
 
-        let naive_date = chrono::NaiveDateTime::from_timestamp(entry.timestamp, 0);
+        let naive_date = chrono::DateTime::parse_from_rfc3339(&entry.date_modified)?;
+        let title = format!("Entry {}", naive_date.timestamp());
+
         let date = chrono::Utc
             .ymd(naive_date.year(), naive_date.month(), naive_date.day())
             .and_hms(naive_date.hour(), naive_date.minute(), naive_date.second())
             .to_rfc2822();
 
-        let content = format!("{}<p>{}</p>", entry.content, entry.title);
+        let content = format!("{}<p>{}</p>", entry.content_html, entry.title);
 
         let item = rss::ItemBuilder::default()
             .title(title)
