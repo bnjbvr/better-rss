@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Benjamin Bouvier <public@benj.me>"]
 
 [dependencies]
-reqwest = "0.8.5"
+reqwest = "0.9.18"
 select = "0.4.2"
 rss = "1.5.0"
 serde = "1.0.70"
